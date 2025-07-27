@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResumeRefiner - AI-Powered Resume Enhancement</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ResumeRefiner</h1>
+            <p>AI-Powered Resume Enhancement</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <div class="upload-section">
+                    <div class="file-upload">
+                        <input type="file" id="pdfUpload" accept=".pdf" class="file-input" />
+                        <label for="pdfUpload" class="upload-label">
+                            <span class="upload-icon">📄</span>
+                            <span>Upload your Resume (PDF)</span>
+                            <span class="upload-hint">Drag & drop or click to select</span>
+                        </label>
+                    </div>
+                    
+                    <button class="text-input-toggle" onclick="toggleTextInput()">
+                        Or paste resume text instead
+                    </button>
+                </div>
+
+                <div id="textInputSection" class="form-group hidden">
+                    <label for="resumeText">Paste your resume text:</label>
+                    <textarea id="resumeText" rows="12" placeholder="Paste your resume content here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="targetRole">Target Role (optional):</label>
+                    <input type="text" id="targetRole" placeholder="e.g., Software Engineer, Product Manager">
+                </div>
+
+                <button id="enhanceBtn" onclick="enhanceResume()">Enhance Resume</button>
+            </div>
+
+            <div id="loadingSpinner" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Enhancing your resume...</p>
+            </div>
+
+            <div id="results" class="hidden">
+                <div class="result-section">
+                    <h2>Enhanced Resume (LaTeX Format)</h2>
+                    <textarea id="improvedText" rows="12" readonly></textarea>
+                    <div class="button-group">
+                        <button onclick="copyToClipboard('improvedText')">Copy to Clipboard</button>
+                        <button id="downloadLatex" onclick="downloadLatexFile()" class="hidden">Download LaTeX File</button>
+                    </div>
+                </div>
+
+                <div class="result-section">
+                    <h2>Improvements Made</h2>
+                    <ul id="suggestionsList"></ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="latex_utils.js"></script>
+</body>
+</html>
