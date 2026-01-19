@@ -1,62 +1,22 @@
-function toggleTextInput() {
-    const textSection = document.getElementById('textInputSection');
-    textSection.classList.toggle('hidden');
+/**
+ * ResumeRefiner Frontend Logic
+ */
 
-    // Clear the file input if text input is shown
-    if (!textSection.classList.contains('hidden')) {
-        document.getElementById('pdfUpload').value = '';
-    }
-}
+let currentAbortController = null;
 
-// Handle drag and drop
-function setupDragAndDrop() {
-    const dropZone = document.querySelector('.upload-label');
+// Initialize components
+document.addEventListener('DOMContentLoaded', () => {
+    setupDragAndDrop();
+    initializeTheme();
+});
 
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight, false);
-    });
-
-    function highlight(e) {
-        dropZone.classList.add('dragover');
-    }
-
-    function unhighlight(e) {
-        dropZone.classList.remove('dragover');
-    }
-
-    dropZone.addEventListener('drop', handleDrop, false);
-}
-
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const file = dt.files[0];
-
-    if (file && file.type === 'application/pdf') {
-        document.getElementById('pdfUpload').files = dt.files;
-        handlePDFUpload(file);
-    }
-}
-
-// Theme handling
+// --- Theme Management ---
 function toggleTheme() {
     const html = document.documentElement;
     const themeIcon = document.getElementById('themeIcon');
-    const currentTheme = html.getAttribute('data-theme');
+    const isDark = html.getAttribute('data-theme') === 'dark';
 
-    if (currentTheme === 'dark') {
+    if (isDark) {
         html.removeAttribute('data-theme');
         themeIcon.textContent = '☀️';
         localStorage.setItem('theme', 'light');
@@ -67,31 +27,27 @@ function toggleTheme() {
     }
 }
 
-// Initialize theme from localStorage
 function initializeTheme() {
     const savedTheme = localStorage.getItem('theme');
     const themeIcon = document.getElementById('themeIcon');
-
     if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         themeIcon.textContent = '🌙';
-    } else {
-        themeIcon.textContent = '☀️';
     }
 }
 
-// Initialize drag and drop and theme
-document.addEventListener('DOMContentLoaded', () => {
-    setupDragAndDrop();
-    initializeTheme();
-});
+// --- File Handling & PDF Extraction ---
+function toggleTextInput() {
+    const textSection = document.getElementById('textInputSection');
+    textSection.classList.toggle('hidden');
+    if (!textSection.classList.contains('hidden')) {
+        document.getElementById('pdfUpload').value = '';
+    }
+}
 
-// Handle PDF file upload
 document.getElementById('pdfUpload').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) {
-        handlePDFUpload(file);
-    }
+    if (file) handlePDFUpload(file);
 });
 
 async function handlePDFUpload(file) {
@@ -103,105 +59,112 @@ async function handlePDFUpload(file) {
             method: 'POST',
             body: formData
         });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error('Upload failed');
 
         const data = await response.json();
         document.getElementById('resumeText').value = data.text;
         document.getElementById('textInputSection').classList.remove('hidden');
-
     } catch (error) {
-        console.error('Error:', error);
-        alert('Error processing PDF. Please try uploading again or paste the text manually.');
+        alert('Error processing PDF. Please paste text manually.');
     }
 }
 
+// --- Core AI Logic ---
 async function enhanceResume() {
     const resumeText = document.getElementById('resumeText').value.trim();
     const targetRole = document.getElementById('targetRole').value.trim();
 
     if (!resumeText) {
-        alert('Please upload a PDF or paste your resume content.');
+        alert('Please provide resume content first.');
         return;
     }
 
-    // Show loading spinner
-    document.getElementById('loadingSpinner').classList.remove('hidden');
-    document.getElementById('results').classList.add('hidden');
-    document.getElementById('enhanceBtn').disabled = true;
+    // Cancel existing request if user clicks again
+    if (currentAbortController) currentAbortController.abort();
+    currentAbortController = new AbortController();
+
+    // UI State: Loading
+    const enhanceBtn = document.getElementById('enhanceBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const resultsSection = document.getElementById('results');
+
+    loadingSpinner.classList.remove('hidden');
+    resultsSection.classList.add('hidden');
+    enhanceBtn.disabled = true;
 
     try {
         const response = await fetch('http://localhost:5000/enhance_resume', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            signal: currentAbortController.signal,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 resume_text: resumeText,
                 target_role: targetRole || undefined
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error('AI Enhancement failed');
 
         const data = await response.json();
 
-        // Display results
+        // Update UI with results
         document.getElementById('improvedText').value = data.improved_text;
-
         const suggestionsList = document.getElementById('suggestionsList');
         suggestionsList.innerHTML = data.suggestions
-            .map(suggestion => `<li>${suggestion}</li>`)
+            .map(s => `<li>${s}</li>`)
             .join('');
 
-        // Enable download LaTeX button
         document.getElementById('downloadLatex').classList.remove('hidden');
-
-        // Show results section
-        document.getElementById('results').classList.remove('hidden');
+        resultsSection.classList.remove('hidden');
 
     } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while enhancing your resume. Please try again.');
+        if (error.name === 'AbortError') return;
+        console.error(error);
+        alert('An error occurred. Please try again.');
     } finally {
-        // Hide loading spinner and re-enable button
-        document.getElementById('loadingSpinner').classList.add('hidden');
-        document.getElementById('enhanceBtn').disabled = false;
+        loadingSpinner.classList.add('hidden');
+        enhanceBtn.disabled = false;
     }
 }
 
-async function copyToClipboard(elementId) {
+// --- Utilities ---
+async function copyToClipboard(elementId, btn) {
     const element = document.getElementById(elementId);
     try {
         await navigator.clipboard.writeText(element.value);
-        // Visual feedback logic remains same
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = originalText; }, 2000);
     } catch (err) {
-        console.error('Failed to copy!', err);
+        console.error('Clipboard failed', err);
     }
 }
 
-let currentAbortController = null;
+// --- Drag and Drop Logic ---
+function setupDragAndDrop() {
+    const dropZone = document.querySelector('.upload-label');
+    if (!dropZone) return;
 
-async function enhanceResume() {
-    // Cancel any ongoing request
-    if (currentAbortController) {
-        currentAbortController.abort();
-    }
-    currentAbortController = new AbortController();
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+        dropZone.addEventListener(name, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
 
-    // ... existing validation ...
+    ['dragenter', 'dragover'].forEach(name => {
+        dropZone.addEventListener(name, () => dropZone.classList.add('dragover'), false);
+    });
 
-    try {
-        const response = await fetch('http://localhost:5000/enhance_resume', {
-            method: 'POST',
-            signal: currentAbortController.signal, // Connect the abort signal
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resume_text: resumeText, target_role: targetRole })
-        });
-        // ... rest of logic
-    }
+    ['dragleave', 'drop'].forEach(name => {
+        dropZone.addEventListener(name, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file && file.type === 'application/pdf') {
+            document.getElementById('pdfUpload').files = e.dataTransfer.files;
+            handlePDFUpload(file);
+        }
+    }, false);
 }
