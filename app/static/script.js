@@ -50,8 +50,41 @@ function handleDrop(e) {
     }
 }
 
-// Initialize drag and drop
-document.addEventListener('DOMContentLoaded', setupDragAndDrop);
+// Theme handling
+function toggleTheme() {
+    const html = document.documentElement;
+    const themeIcon = document.getElementById('themeIcon');
+    const currentTheme = html.getAttribute('data-theme');
+    
+    if (currentTheme === 'dark') {
+        html.removeAttribute('data-theme');
+        themeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+    } else {
+        html.setAttribute('data-theme', 'dark');
+        themeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+// Initialize theme from localStorage
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeIcon.textContent = '🌙';
+    } else {
+        themeIcon.textContent = '☀️';
+    }
+}
+
+// Initialize drag and drop and theme
+document.addEventListener('DOMContentLoaded', () => {
+    setupDragAndDrop();
+    initializeTheme();
+});
 
 // Handle PDF file upload
 document.getElementById('pdfUpload').addEventListener('change', (e) => {
