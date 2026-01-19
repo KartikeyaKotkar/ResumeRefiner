@@ -1,7 +1,7 @@
 function toggleTextInput() {
     const textSection = document.getElementById('textInputSection');
     textSection.classList.toggle('hidden');
-    
+
     // Clear the file input if text input is shown
     if (!textSection.classList.contains('hidden')) {
         document.getElementById('pdfUpload').value = '';
@@ -11,7 +11,7 @@ function toggleTextInput() {
 // Handle drag and drop
 function setupDragAndDrop() {
     const dropZone = document.querySelector('.upload-label');
-    
+
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -43,7 +43,7 @@ function setupDragAndDrop() {
 function handleDrop(e) {
     const dt = e.dataTransfer;
     const file = dt.files[0];
-    
+
     if (file && file.type === 'application/pdf') {
         document.getElementById('pdfUpload').files = dt.files;
         handlePDFUpload(file);
@@ -55,7 +55,7 @@ function toggleTheme() {
     const html = document.documentElement;
     const themeIcon = document.getElementById('themeIcon');
     const currentTheme = html.getAttribute('data-theme');
-    
+
     if (currentTheme === 'dark') {
         html.removeAttribute('data-theme');
         themeIcon.textContent = '☀️';
@@ -71,7 +71,7 @@ function toggleTheme() {
 function initializeTheme() {
     const savedTheme = localStorage.getItem('theme');
     const themeIcon = document.getElementById('themeIcon');
-    
+
     if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         themeIcon.textContent = '🌙';
@@ -97,21 +97,21 @@ document.getElementById('pdfUpload').addEventListener('change', (e) => {
 async function handlePDFUpload(file) {
     const formData = new FormData();
     formData.append('pdf', file);
-    
+
     try {
         const response = await fetch('http://localhost:5000/extract_pdf', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         document.getElementById('resumeText').value = data.text;
         document.getElementById('textInputSection').classList.remove('hidden');
-        
+
     } catch (error) {
         console.error('Error:', error);
         alert('Error processing PDF. Please try uploading again or paste the text manually.');
@@ -121,7 +121,7 @@ async function handlePDFUpload(file) {
 async function enhanceResume() {
     const resumeText = document.getElementById('resumeText').value.trim();
     const targetRole = document.getElementById('targetRole').value.trim();
-    
+
     if (!resumeText) {
         alert('Please upload a PDF or paste your resume content.');
         return;
@@ -149,15 +149,15 @@ async function enhanceResume() {
         }
 
         const data = await response.json();
-        
+
         // Display results
         document.getElementById('improvedText').value = data.improved_text;
-        
+
         const suggestionsList = document.getElementById('suggestionsList');
         suggestionsList.innerHTML = data.suggestions
             .map(suggestion => `<li>${suggestion}</li>`)
             .join('');
-            
+
         // Enable download LaTeX button
         document.getElementById('downloadLatex').classList.remove('hidden');
 
@@ -174,16 +174,34 @@ async function enhanceResume() {
     }
 }
 
-function copyToClipboard(elementId) {
+async function copyToClipboard(elementId) {
     const element = document.getElementById(elementId);
-    element.select();
-    document.execCommand('copy');
-    
-    // Visual feedback
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = 'Copied!';
-    setTimeout(() => {
-        button.textContent = originalText;
-    }, 2000);
+    try {
+        await navigator.clipboard.writeText(element.value);
+        // Visual feedback logic remains same
+    } catch (err) {
+        console.error('Failed to copy!', err);
+    }
+}
+
+let currentAbortController = null;
+
+async function enhanceResume() {
+    // Cancel any ongoing request
+    if (currentAbortController) {
+        currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+
+    // ... existing validation ...
+
+    try {
+        const response = await fetch('http://localhost:5000/enhance_resume', {
+            method: 'POST',
+            signal: currentAbortController.signal, // Connect the abort signal
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resume_text: resumeText, target_role: targetRole })
+        });
+        // ... rest of logic
+    }
 }
