@@ -34,9 +34,8 @@ jobs:
       run: |
         black . --check
 
-    - name: Security Scan with Bandit
-      run: |
-        bandit -r app/ -f custom
+    - name: Run Bandit Scan
+      run: bandit -r app/ -f custom -lll
 
     - name: Run Tests
       # Add PYTHONPATH=. so pytest can find the 'app' module
