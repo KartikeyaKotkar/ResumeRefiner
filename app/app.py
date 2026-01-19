@@ -123,4 +123,4 @@ async def enhance_resume():
 if __name__ == "__main__":
     # Defaults to False if FLASK_DEBUG is not set
     debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
-    app.run(host="0.0.0.0", debug=debug_mode) # nosec B104
+    app.run(host="0.0.0.0", debug=debug_mode)  # nosec B104
