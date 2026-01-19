@@ -1,4 +1,10 @@
+# Linting and Formatting
 flake8==6.1.0
 black==23.9.1
+
+# Testing
 pytest==7.4.2
+
+# Security
 bandit==1.7.5
+pbr>=6.0.0  # Added to resolve your previous Bandit error
