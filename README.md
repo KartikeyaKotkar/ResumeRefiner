@@ -23,7 +23,7 @@ An AI-powered resume enhancement service that uses Google's Gemini API to improv
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ResumeRefiner.git
+git clone https://github.com/KartikeyaKotkar/ResumeRefiner.git
 cd ResumeRefiner
 ```
 
@@ -50,6 +50,39 @@ python main.py
 ```
 
 The application will be available at `http://localhost:5000`.
+
+## Docker Support
+
+Run the application in a container ensuring consistent environments:
+
+1. **Using Docker Compose** (Recommended):
+```bash
+docker-compose up -d
+```
+
+2. **Using standard Docker**:
+```bash
+# Build
+docker build -t resume-refiner .
+
+# Run
+docker run -p 5000:5000 --env-file .env resume-refiner
+```
+
+3. **Using Makefile**:
+```bash
+make build
+make run
+```
+
+## CI/CD Pipeline
+
+This project uses **GitHub Actions** for automated testing and deployment assurance.
+- **Linting**: Flake8 checks for code quality.
+- **Security**: Bandit scans for python vulnerabilities.
+- **Testing**: Pytest runs unit and integration tests.
+- **Build**: Verifies Docker image creation.
+
 
 ## Usage
 
