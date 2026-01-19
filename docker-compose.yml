@@ -6,7 +6,7 @@ services:
     volumes:
       - .:/app
     environment:
-      - FLASK_ENV=development
+      - FLASK_DEBUG=true
     # Ensure .env exists in the same folder before running
     env_file:
       - .env
