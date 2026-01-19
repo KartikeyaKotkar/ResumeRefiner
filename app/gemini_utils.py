@@ -48,8 +48,6 @@ def create_latex_format_prompt(improved_content: str) -> str:
         "Content to format:\n{text}"
     ).format(text=improved_content)
     
-    role_context = f" for the role of {target_role}" if target_role else ""
-    return base_prompt.format(role_context=role_context, text=resume_text)
 
 def wrap_latex_content(content: str) -> str:
     """Wrap the LaTeX content in a complete document structure."""
