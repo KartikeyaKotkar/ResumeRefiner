@@ -17,11 +17,12 @@ SYSTEM_INSTRUCTION = (
     "You always respond in valid JSON format."
 )
 
+
 def get_model():
     return genai.GenerativeModel(
-        model_name="gemini-1.5-pro",
-        system_instruction=SYSTEM_INSTRUCTION
+        model_name="gemini-1.5-pro", system_instruction=SYSTEM_INSTRUCTION
     )
+
 
 def wrap_latex_content(content: str) -> str:
     """Wrap the raw LaTeX body in a complete document structure."""
@@ -45,14 +46,17 @@ def wrap_latex_content(content: str) -> str:
         "\\end{document}"
     )
 
-async def enhance_resume_with_gemini(resume_text: str, target_role: str = None) -> tuple[str, list[str]]:
+
+async def enhance_resume_with_gemini(
+    resume_text: str, target_role: str = None
+) -> tuple[str, list[str]]:
     """
     Performs content improvement, LaTeX formatting, and suggestion generation in a single call.
     """
     model = get_model()
-    
+
     role_context = f"specifically for a {target_role} role" if target_role else ""
-    
+
     prompt = f"""
     Analyze the following resume {role_context}:
     ---
@@ -74,16 +78,17 @@ async def enhance_resume_with_gemini(resume_text: str, target_role: str = None) 
     try:
         # Generate content with JSON constraint
         response = await model.generate_content_async(
-            prompt,
-            generation_config={"response_mime_type": "application/json"}
+            prompt, generation_config={"response_mime_type": "application/json"}
         )
-        
+
         # Parse the JSON response
         data = json.loads(response.text)
-        
+
         final_latex = wrap_latex_content(data.get("latex_body", ""))
-        suggestions = data.get("suggestions", ["Improved professional language", "Optimized formatting"])
-        
+        suggestions = data.get(
+            "suggestions", ["Improved professional language", "Optimized formatting"]
+        )
+
         return final_latex, suggestions
 
     except Exception as e:
