@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
 
 def create_content_improvement_prompt(resume_text: str, target_role: str = None) -> str:
     """Create the prompt for content improvement before LaTeX formatting."""
@@ -33,6 +34,7 @@ def create_content_improvement_prompt(resume_text: str, target_role: str = None)
         "Resume:\n{text}"
     ).format(role_context=role_context, text=resume_text)
 
+
 def create_latex_format_prompt(improved_content: str) -> str:
     """Create the prompt for LaTeX formatting of the improved content."""
     return (
@@ -47,7 +49,7 @@ def create_latex_format_prompt(improved_content: str) -> str:
         "7. Include only the content that goes inside the document environment\n\n"
         "Content to format:\n{text}"
     ).format(text=improved_content)
-    
+
 
 def wrap_latex_content(content: str) -> str:
     """Wrap the LaTeX content in a complete document structure."""
@@ -71,34 +73,37 @@ def wrap_latex_content(content: str) -> str:
         "\\end{document}"
     )
 
-async def enhance_resume_with_gemini(resume_text: str, target_role: str = None) -> tuple[str, list[str]]:
+
+async def enhance_resume_with_gemini(
+    resume_text: str, target_role: str = None
+) -> tuple[str, list[str]]:
     """
     Enhance a resume using Gemini AI and format it in LaTeX.
-    
+
     Args:
         resume_text (str): The original resume text
         target_role (str, optional): The target job role
-    
+
     Returns:
         tuple[str, list[str]]: Improved text (in LaTeX format) and list of suggestions
     """
     try:
         # Initialize Gemini model
-        model = genai.GenerativeModel('gemini-1.5-pro')
-        
+        model = genai.GenerativeModel("gemini-1.5-pro")
+
         # Step 1: Improve content
         content_prompt = create_content_improvement_prompt(resume_text, target_role)
         content_response = await model.generate_content_async(content_prompt)
         improved_content = content_response.text
-        
+
         # Step 2: Format as LaTeX
         latex_prompt = create_latex_format_prompt(improved_content)
         latex_response = await model.generate_content_async(latex_prompt)
         latex_content = latex_response.text
-        
+
         # Wrap in complete LaTeX document
         final_latex = wrap_latex_content(latex_content)
-        
+
         # Generate detailed suggestions
         suggestions_prompt = (
             "Based on the improvements made to the resume, provide a detailed list of 3-5 key enhancements, including:\n"
@@ -109,14 +114,15 @@ async def enhance_resume_with_gemini(resume_text: str, target_role: str = None) 
             "Format as bullet points and be specific about what was changed."
         )
         suggestions_response = await model.generate_content_async(suggestions_prompt)
-        
+
         # Parse suggestions into a list
         suggestions = [
-            s.strip('- ') for s in suggestions_response.text.split('\n')
-            if s.strip('- ')
+            s.strip("- ")
+            for s in suggestions_response.text.split("\n")
+            if s.strip("- ")
         ]
-        
+
         return final_latex, suggestions
-        
+
     except Exception as e:
         raise Exception(f"Error enhancing resume with Gemini: {str(e)}")
