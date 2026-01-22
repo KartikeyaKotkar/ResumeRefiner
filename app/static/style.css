@@ -134,6 +134,23 @@ header h1 {
     color: var(--primary-dark);
 }
 
+.sample-btn {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sample-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
 .form-group {
     margin-bottom: 1.5rem;
 }
