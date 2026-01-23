@@ -4,7 +4,7 @@ import os
 import logging.config
 import tempfile
 import subprocess
-import PyPDF2
+import pypdf
 import requests
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
