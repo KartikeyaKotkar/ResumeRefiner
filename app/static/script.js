@@ -223,14 +223,16 @@ async function enhanceResume() {
 
         const data = await response.json();
 
+        // Store global state
+        currentResumeData = data;
+
         // Update UI with results
-        document.getElementById('improvedText').value = data.improved_text;
+        document.getElementById('improvedText').value = data.latex;
         const suggestionsList = document.getElementById('suggestionsList');
         suggestionsList.innerHTML = data.suggestions
             .map(s => `<li>${s}</li>`)
             .join('');
 
-        document.getElementById('downloadLatex').classList.remove('hidden');
         resultsSection.classList.remove('hidden');
 
     } catch (error) {
@@ -241,6 +243,96 @@ async function enhanceResume() {
         loadingSpinner.classList.add('hidden');
         enhanceBtn.disabled = false;
     }
+}
+
+// --- Downloads & Sharing ---
+
+let currentResumeData = null;
+
+async function downloadFormat(format) {
+    if (!currentResumeData) return;
+
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `resume_enhanced_${timestamp}`;
+
+    if (format === 'latex') {
+        const blob = new Blob([currentResumeData.latex], { type: 'text/plain' });
+        downloadBlob(blob, `${filename}.tex`);
+    } else if (format === 'txt') {
+        const blob = new Blob([currentResumeData.plain_text], { type: 'text/plain' });
+        downloadBlob(blob, `${filename}.txt`);
+    } else if (format === 'pdf') {
+        await downloadGeneratedFile('/generate_pdf', { latex_code: currentResumeData.latex }, `${filename}.pdf`);
+    } else if (format === 'docx') {
+        await downloadGeneratedFile('/generate_docx', { structured_data: currentResumeData.structured_data }, `${filename}.docx`);
+    }
+}
+
+async function shareToGist() {
+    if (!currentResumeData) return;
+
+    if (!confirm("This will create a PUBLIC Gist on GitHub. Continue?")) return;
+
+    try {
+        const response = await fetch('/create_gist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                content: currentResumeData.plain_text,
+                filename: 'resume.txt'
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to create Gist');
+        }
+
+        const data = await response.json();
+        prompt("Gist created successfully! Copy URL:", data.html_url);
+    } catch (e) {
+        alert("Error creating Gist: " + e.message);
+    }
+}
+
+async function downloadGeneratedFile(endpoint, payload, filename) {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Generating...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Generation failed');
+        }
+
+        const blob = await response.blob();
+        downloadBlob(blob, filename);
+
+    } catch (e) {
+        alert("Download failed: " + e.message);
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+function downloadBlob(blob, filename) {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
 }
 
 // --- Utilities ---
