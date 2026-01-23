@@ -1,0 +1,9 @@
+[
+  {
+    "label": "WSL: Open Terminal",
+    "command": "wsl.exe",
+    "use_new_terminal": true,
+    "reveal": "always",
+    "reveal_target": "dock",
+  },
+]
