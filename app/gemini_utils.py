@@ -9,8 +9,7 @@ from google.genai import types
 load_dotenv()
 
 client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY"),
-    http_options={'api_version': 'v1beta'}
+    api_key=os.getenv("GEMINI_API_KEY"), http_options={"api_version": "v1beta"}
 )
 
 SYSTEM_INSTRUCTION = (
@@ -18,6 +17,7 @@ SYSTEM_INSTRUCTION = (
     "improve their content for ATS optimization, and format them into professional LaTeX code. "
     "You always respond in valid JSON format."
 )
+
 
 def wrap_latex_content(content: str) -> str:
     return (
@@ -29,7 +29,7 @@ def wrap_latex_content(content: str) -> str:
         "\\usepackage{enumitem}\n"
         "\\usepackage{xcolor}\n\n"
         "\\definecolor{primary}{RGB}{0, 0, 0}\n"
-        "\\titleformat{\\section}{\\large\\bfseries\\uppercase}{}{0em}{}[\\titlerule]\n" 
+        "\\titleformat{\\section}{\\large\\bfseries\\uppercase}{}{0em}{}[\\titlerule]\n"
         "\\titlespacing*{\\section}{0pt}{10pt}{5pt}\n"
         "\\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=1.5em}\n\n"
         "\\begin{document}\n"
@@ -65,8 +65,8 @@ Return a JSON object with exactly these keys:
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTION,
-                response_mime_type="application/json"
-            )
+                response_mime_type="application/json",
+            ),
         )
 
         data = json.loads(response.text)
@@ -81,5 +81,7 @@ Return a JSON object with exactly these keys:
     except Exception as e:
         print(f"Gemini Error: {e}")
         if "404" in str(e):
-            raise Exception("Model 1.5-pro not found. Try changing model to 'gemini-3-flash'.")
+            raise Exception(
+                "Model 1.5-pro not found. Try changing model to 'gemini-3-flash'."
+            )
         raise Exception(f"Final Fix Error: {str(e)}")
