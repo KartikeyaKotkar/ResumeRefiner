@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ResumeRefiner - AI-Powered Resume Enhancement</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -29,11 +31,11 @@
                             <span class="upload-hint">Drag & drop or click to select</span>
                         </label>
                     </div>
-                    
+
                     <button class="text-input-toggle" onclick="toggleTextInput()">
                         Or paste resume text instead
                     </button>
-                    
+
                     <button class="sample-btn" onclick="fillSampleResume()">
                         Try Sample Resume (Quick Demo)
                     </button>
@@ -62,20 +64,26 @@
                     <h2>Enhanced Resume (LaTeX Format)</h2>
                     <textarea id="improvedText" rows="12" readonly></textarea>
                     <div class="button-group">
-                        <button onclick="copyToClipboard('improvedText')">Copy to Clipboard</button>
-                        <button id="downloadLatex" onclick="downloadLatexFile()" class="hidden">Download LaTeX File</button>
+                        <div class="button-group export-controls">
+                            <button onclick="copyToClipboard('improvedText', this)">Copy LaTeX</button>
+                            <button onclick="downloadFormat('latex')" class="btn-secondary">LaTeX (.tex)</button>
+                            <button onclick="downloadFormat('pdf')" class="btn-primary">PDF (.pdf)</button>
+                            <button onclick="downloadFormat('docx')" class="btn-secondary">Word (.docx)</button>
+                            <button onclick="downloadFormat('txt')" class="btn-secondary">Text (.txt)</button>
+                            <button onclick="shareToGist()" class="btn-accent">Share Gist</button>
+                        </div>
+                    </div>
+
+                    <div class="result-section">
+                        <h2>Improvements Made</h2>
+                        <ul id="suggestionsList"></ul>
                     </div>
                 </div>
-
-                <div class="result-section">
-                    <h2>Improvements Made</h2>
-                    <ul id="suggestionsList"></ul>
-                </div>
-            </div>
         </main>
     </div>
 
     <script src="script.js"></script>
     <script src="latex_utils.js"></script>
 </body>
+
 </html>
