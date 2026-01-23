@@ -98,7 +98,8 @@ header h1 {
     transition: border-color var(--transition-duration), background-color var(--transition-duration);
 }
 
-.upload-label:hover, .upload-label.dragover {
+.upload-label:hover,
+.upload-label.dragover {
     border-color: var(--primary-color);
     background-color: #f8fafc;
 }
@@ -161,7 +162,8 @@ label {
     font-weight: 500;
 }
 
-textarea, input[type="text"] {
+textarea,
+input[type="text"] {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--border-color);
@@ -170,7 +172,8 @@ textarea, input[type="text"] {
     transition: border-color 0.2s;
 }
 
-textarea:focus, input[type="text"]:focus {
+textarea:focus,
+input[type="text"]:focus {
     outline: none;
     border-color: var(--primary-color);
 }
@@ -245,10 +248,36 @@ button:hover {
 
 .button-group {
     display: flex;
-    gap: 1rem;
+    gap: 0.5rem;
     margin-top: 1rem;
+    flex-wrap: wrap;
 }
 
 .button-group button {
     flex: 1;
+    min-width: 120px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border-color);
+}
+
+.btn-accent {
+    background-color: #8b5cf6;
+    /* Violet */
+    color: white;
+}
+
+.btn-accent:hover {
+    background-color: #7c3aed;
 }
