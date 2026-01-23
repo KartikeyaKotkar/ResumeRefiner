@@ -1,27 +1,22 @@
 """Utility functions for interacting with Google's Gemini API."""
 
-import os
 import json
-import google.generativeai as genai
+import os
+
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types  # Added for structured config
 
 load_dotenv()
 
-# Configure API Key
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# 1. Initialize the Client (Replaces genai.configure)
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Use System Instructions to keep the model focused and consistent
 SYSTEM_INSTRUCTION = (
     "You are an expert career coach and LaTeX specialist. Your task is to analyze resumes, "
     "improve their content for ATS optimization, and format them into professional LaTeX code. "
     "You always respond in valid JSON format."
 )
-
-
-def get_model():
-    return genai.GenerativeModel(
-        model_name="gemini-1.5-pro", system_instruction=SYSTEM_INSTRUCTION
-    )
 
 
 def wrap_latex_content(content: str) -> str:
@@ -47,14 +42,10 @@ def wrap_latex_content(content: str) -> str:
     )
 
 
-async def enhance_resume_with_gemini(
-    resume_text: str, target_role: str = None
-) -> tuple[str, list[str]]:
+async def enhance_resume_with_gemini(resume_text: str, target_role: str = None) -> dict:
     """
-    Performs content improvement, LaTeX formatting, and suggestion generation in a single call.
+    Performs content improvement, LaTeX formatting, and suggestion generation.
     """
-    model = get_model()
-
     role_context = f"specifically for a {target_role} role" if target_role else ""
 
     prompt = f"""
@@ -62,34 +53,63 @@ async def enhance_resume_with_gemini(
     ---
     {resume_text}
     ---
-    
+
     Tasks:
     1. Improve the content (action verbs, metrics, professional tone).
     2. Format the improved content as LaTeX (only provide the body commands like \\section, \\item, etc.).
-    3. List 3-5 specific improvements made.
+    3. Provide an ATS-friendly plain text version.
+    4. Provide structured data for DOCX generation.
+    5. List 3-5 specific improvements made.
 
     Return the result as a JSON object with exactly these keys:
     {{
-        "latex_body": "string containing LaTeX code",
-        "suggestions": ["list", "of", "strings"]
+        "latex_body": "string",
+        "plain_text": "string",
+        "structured_data": {{
+            "name": "string",
+            "contact_info": "string",
+            "summary": "string",
+            "experience": [
+                {{
+                    "company": "string",
+                    "role": "string",
+                    "duration": "string",
+                    "location": "string",
+                    "points": ["string"]
+                }}
+            ],
+            "education": [
+                {{
+                    "institution": "string",
+                    "degree": "string",
+                    "year": "string"
+                }}
+            ],
+            "skills": ["string"]
+        }},
+        "suggestions": ["string"]
     }}
     """
 
     try:
-        # Generate content with JSON constraint
-        response = await model.generate_content_async(
-            prompt, generation_config={"response_mime_type": "application/json"}
+        response = client.models.generate(
+            model="gemini-1.5-pro",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_mime_type="application/json",
+            ),
         )
 
-        # Parse the JSON response
+        # 3. Parse JSON
         data = json.loads(response.text)
 
-        final_latex = wrap_latex_content(data.get("latex_body", ""))
-        suggestions = data.get(
-            "suggestions", ["Improved professional language", "Optimized formatting"]
-        )
-
-        return final_latex, suggestions
+        return {
+            "latex": wrap_latex_content(data.get("latex_body", "")),
+            "plain_text": data.get("plain_text", ""),
+            "structured_data": data.get("structured_data", {}),
+            "suggestions": data.get("suggestions", ["Improved professional language"]),
+        }
 
     except Exception as e:
         print(f"Gemini Error: {e}")
