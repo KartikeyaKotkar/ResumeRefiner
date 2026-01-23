@@ -4,8 +4,7 @@ import os
 import logging.config
 import tempfile
 import subprocess
-import pypdf
-import requests
+from pypdf import PdfReader
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from pythonjsonlogger import jsonlogger
@@ -53,8 +52,12 @@ async def extract_pdf():
             return jsonify({"error": "No PDF file provided"}), 400
 
         pdf_file = request.files["pdf"]
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        text = "".join([page.extract_text() + "\n" for page in pdf_reader.pages])
+        pdf_reader = PdfReader(pdf_file)
+
+        text = "".join(
+            (page.extract_text() or "") + "\n"
+            for page in pdf_reader.pages
+        )
 
         return jsonify({"text": text.strip()})
     except Exception as e:
@@ -74,9 +77,7 @@ async def enhance_resume():
 
         logger.info("Enhancing resume", extra={"target_role": target_role})
 
-        # Call our updated Gemini utility
         result = await enhance_resume_with_gemini(resume_text, target_role)
-
         return jsonify(result)
     except Exception as e:
         logger.error("Enhancement Error", extra={"error": str(e)})
@@ -128,5 +129,4 @@ def generate_docx():
 
 if __name__ == "__main__":
     debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
-
     app.run(host="0.0.0.0", port=5000, debug=debug_mode)  # nosec B201

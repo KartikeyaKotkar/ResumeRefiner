@@ -1,5 +1,4 @@
 import asyncio
-import os
 from app.gemini_utils import enhance_resume_with_gemini
 from dotenv import load_dotenv
 
