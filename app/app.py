@@ -54,10 +54,7 @@ async def extract_pdf():
         pdf_file = request.files["pdf"]
         pdf_reader = PdfReader(pdf_file)
 
-        text = "".join(
-            (page.extract_text() or "") + "\n"
-            for page in pdf_reader.pages
-        )
+        text = "".join((page.extract_text() or "") + "\n" for page in pdf_reader.pages)
 
         return jsonify({"text": text.strip()})
     except Exception as e:
